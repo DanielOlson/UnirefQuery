@@ -1,6 +1,6 @@
 #include <iostream>
-
-int main() {
+#include "UnirefHeap.h"
+int main(int argc, const char *argv[]) {
     std::cout << "Hello, World!" << std::endl;
     return 0;
 }
