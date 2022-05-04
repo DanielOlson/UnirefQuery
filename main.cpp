@@ -4,7 +4,7 @@
 int main(int argc, const char *argv[]) {
     std::priority_queue<int> queue;
     if (argc != 4) {
-        printf("./UnirefQuery <file path> <max seq length> <heap size>\n");
+        printf("UnirefQuery <file path> <max seq length> <queue size>\n");
         exit(0);
     }
     UnirefHeap *heap = new UnirefHeap(std::atoi(argv[2]), std::atoi(argv[3]));
