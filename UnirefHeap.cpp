@@ -5,13 +5,19 @@
 #include "UnirefHeap.h"
 #include <fstream>
 
-struct gt_n {
-    inline bool operator() (const std::tuple<int, std::string, std::string>& struct1,
-            const std::tuple<int, std::string, std::string>& struct2)
-    {
-        return (std::get<0>(struct1) > std::get<0>(struct2));
+
+int UnirefHeap::ProcessTuple(std::tuple<int, std::string, std::string>tup) {
+    int n = std::get<0>(tup);
+    if (heap.size() < heap_size) {
+        heap.push(tup);
     }
-};
+
+    else if (n > std::get<0>(heap.top())){
+        heap.push(tup);
+        heap.pop();
+    }
+    return 0;
+}
 
 int nForHeader(const std::string &header) {
     int state = 0;
@@ -19,11 +25,14 @@ int nForHeader(const std::string &header) {
     for (int i = 0; i < header.size(); ++i) {
         if (state == 0) {
             if (header[i] == 'n')
-                state++;
+                state = 1;
         }
 
         else if (state == 1) {
-            state++;
+            if (header[i] == '=')
+                state++;
+            else
+                state = 0;
         }
 
         else {
@@ -31,7 +40,8 @@ int nForHeader(const std::string &header) {
             if (c >= 0 && c <= 9)
                 n = (n * 10) + c;
             else
-                return n;
+                break;
+
         }
     }
 
@@ -39,9 +49,7 @@ int nForHeader(const std::string &header) {
 }
 
 void UnirefHeap::ReadFile(std::string file_path) {
-    int state = 0;
-
-    std::ifstream file(file_path);
+    std::ifstream file(file_path, std::ifstream::in);
 
     std::string header_line = "";
     int n = 0;
@@ -51,39 +59,21 @@ void UnirefHeap::ReadFile(std::string file_path) {
         std::string line;
         while (std::getline(file, line)) {
             if (line.length() > 0) {
+
                 if (line[0] == '>') {
                     if (seq.length() > 0 && seq.length() < max_seq_len) {
-                        // add the sequence to the heap
-                        if (heap.size() < heap_size) {
-                            heap.push_back(std::make_tuple(n, header_line, seq));
-                            std::push_heap(heap.begin(), heap.end(), gt_n());
-                            if (n < smallest_item)
-                                smallest_item = n;
-                        }
-
-                        else {
-                            if (n > smallest_item) {
-                                heap.pop_back();
-
-                                std::pop_heap(heap.begin(), heap.end(), gt_n());
-                                heap.push_back(std::make_tuple(n, header_line, seq));
-                                std::push_heap(heap.begin(), heap.end(), gt_n());
-
-                                smallest_item = std::get<0>(heap.back());
-                            }
-
-                        }
-
-                        header_line = line;
-                        n = nForHeader(header_line);
-                        seq = "";
+                        ProcessTuple(std::make_tuple(n, header_line, seq));
                     }
+
+                    header_line = line;
+                    n = nForHeader(header_line);
+                    seq = "";
                 }
 
                 else {
                     for (int i = 0; i < line.length(); ++i) {
                         char c = line[i];
-                        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= "Z")) {
+                        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
                             c = std::toupper(c);
                             seq.push_back(c);
                         }
@@ -101,8 +91,11 @@ void UnirefHeap::ReadFile(std::string file_path) {
 }
 
 void UnirefHeap::OutputHeap() {
-    std::sort_heap(heap.begin(), heap.end(), gt_n());
-    for (const auto &i : heap) {
+
+    while (heap.size() > 0) {
+        auto i = heap.top();
         printf("%s\n%s\n", std::get<1>(i).c_str(), std::get<2>(i).c_str());
+        heap.pop();
     }
+
 }
